@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musikspiel für Kinder - Komplett</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            padding: 20px;
+            color: #333;
+        }
+        h1 { color: #333; margin-bottom: 5px; }
+        
+        .instructions {
+            background-color: #fffacd;
+            border: 2px solid #ffe066;
+            border-radius: 15px;
+            padding: 15px 30px;
+            max-width: 600px;
+            margin: 0 auto 25px auto;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .instructions h3 { margin-top: 0; text-align: center; color: #d4a017; }
+        .instructions ol { margin-bottom: 0; padding-left: 20px; font-size: 16px; line-height: 1.5; }
+
+        .palette {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .note-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: rgba(0,0,0,0.5); 
+        }
+        .note-btn:hover { transform: scale(1.1); }
+        .note-btn.selected { border: 4px solid #333; transform: scale(1.15); }
+        
+        .grid-container {
+            display: inline-block;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 15px;
+        }
+        .grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .measure {
+            display: flex;
+            gap: 10px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border: 2px dashed #ccc;
+        }
+        .beat {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #eee;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .beat.playing {
+            border-color: #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            transform: scale(1.05);
+        }
+
+        .controls { margin: 20px 0 30px 0; }
+        button.action-btn {
+            font-size: 16px;
+            padding: 12px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        .play-btn { background-color: #4CAF50; }
+        .play-btn:hover { background-color: #45a049; }
+        .clear-btn { background-color: #ff9800; }
+        .clear-btn:hover { background-color: #e68a00; }
+        .save-btn { background-color: #2196F3; }
+        .save-btn:hover { background-color: #0b7dda; }
+        .image-btn { background-color: #9c27b0; }
+        .image-btn:hover { background-color: #7b1fa2; }
+
+        .folder-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .folder-container h2 { margin-top: 0; color: #333; text-align: center; }
+        .melody-list { list-style-type: none; padding: 0; }
+        .melody-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .melody-name { font-weight: bold; font-size: 16px; color: #555; }
+        .melody-actions button {
+            padding: 6px 12px;
+            margin-left: 5px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .load-btn { background-color: #4CAF50; color: white; }
+        .delete-btn { background-color: #f44336; color: white; }
+        .empty-message { text-align: center; color: #888; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <h1>🎹 Meine erste Melodie 🎵</h1>
+    
+    <div class="instructions">
+        <h3>📖 Wie wird gespielt?</h3>
+        <ol>
+            <li><strong>Wähle eine Farbe</strong> aus der Palette. Jede Farbe klingt anders!</li>
+            <li><strong>Tippe auf die grauen Kreise</strong>, um deine Noten zu malen. Wenn du dich vertust, tippe einfach nochmal darauf, um sie zu löschen.</li>
+            <li>Klicke auf den <strong>▶️ Play</strong> Button, um dein Musikstück anzuhören.</li>
+            <li>Gefällt es dir? Benutze die blauen und lila Buttons, um es <strong>in deinem Ordner zu speichern</strong> oder ein <strong>Foto herunterzuladen</strong>.</li>
+        </ol>
+    </div>
+
+    <div class="palette" id="palette"></div>
+    
+    <div class="grid-container" id="capture-area">
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="controls">
+        <button class="action-btn play-btn" id="playBtn">▶️ Play</button>
+        <button class="action-btn clear-btn" id="clearBtn">🧹 Alles löschen</button>
+        <button class="action-btn save-btn" id="saveBtn">💾 In Ordner speichern</button>
+        <button class="action-btn image-btn" id="imageBtn">📸 Foto herunterladen (JPG)</button>
+    </div>
+
+    <div class="folder-container">
+        <h2>📁 Mein Melodien-Ordner</h2>
+        <ul class="melody-list" id="melodyList"></ul>
+        <p class="empty-message" id="emptyMessage">Noch keine Melodien gespeichert.</p>
+    </div>
+
+    <script>
+        // Noten im deutschen System mit dem hohen C (C')
+        const notes = [
+            { id: 'C', name: 'C', color: '#ff3333', freq: 261.63 },   // Do
+            { id: 'D', name: 'D', color: '#ff8c00', freq: 293.66 },   // Re
+            { id: 'E', name: 'E', color: '#ffd700', freq: 329.63 },   // Mi
+            { id: 'F', name: 'F', color: '#a2ff33', freq: 349.23 },   // Fa
+            { id: 'G', name: 'G', color: '#00c853', freq: 392.00 },   // Sol
+            { id: 'A', name: 'A', color: '#1a1aff', freq: 440.00 },   // La
+            { id: 'H', name: 'H', color: '#ff33cc', freq: 493.88 },   // Si
+            { id: 'C2', name: "C'", color: '#ff3333', freq: 523.25 }  // Do agudo (Gleiches Rot)
+        ];
+
+        let selectedNote = notes[0];
+        let audioCtx;
+        let isPlaying = false;
+        const totalMeasures = 4;
+        const beatsPerMeasure = 4;
+        const bpm = 60;
+        const beatDuration = (60 / bpm) * 1000;
+        
+        let savedMelodies = [];
+
+        function init() {
+            const paletteEl = document.getElementById('palette');
+            const gridEl = document.getElementById('grid');
+
+            const storedMelodies = localStorage.getItem('meineMelodien');
+            if (storedMelodies) savedMelodies = JSON.parse(storedMelodies);
+
+            notes.forEach(note => {
+                const btn = document.createElement('div');
+                btn.className = 'note-btn' + (note.id === selectedNote.id ? ' selected' : '');
+                btn.style.backgroundColor = note.color;
+                btn.textContent = note.name;
+                btn.onclick = () => selectNote(note, btn);
+                paletteEl.appendChild(btn);
+            });
+
+            for (let i = 0; i < totalMeasures; i++) {
+                const measureEl = document.createElement('div');
+                measureEl.className = 'measure';
+                for (let j = 0; j < beatsPerMeasure; j++) {
+                    const beatEl = document.createElement('div');
+                    beatEl.className = 'beat';
+                    beatEl.dataset.noteIndex = "null";
+                    beatEl.onclick = () => toggleBeat(beatEl);
+                    measureEl.appendChild(beatEl);
+                }
+                gridEl.appendChild(measureEl);
+            }
+
+            document.getElementById('playBtn').onclick = togglePlay;
+            document.getElementById('clearBtn').onclick = clearGrid;
+            document.getElementById('saveBtn').onclick = saveCurrentMelody;
+            document.getElementById('imageBtn').onclick = exportToJPG;
+
+            renderFolder();
+        }
+
+        function selectNote(note, element) {
+            selectedNote = note;
+            document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('selected'));
+            element.classList.add('selected');
+            playSound(note.freq);
+        }
+
+        function toggleBeat(beatEl) {
+            if (beatEl.dataset.noteIndex === selectedNote.id) {
+                beatEl.dataset.noteIndex = "null";
+                beatEl.style.backgroundColor = '#eee';
+            } else {
+                beatEl.dataset.noteIndex = selectedNote.id;
+                beatEl.style.backgroundColor = selectedNote.color;
+                playSound(selectedNote.freq);
+            }
+        }
+
+        function clearGrid() {
+            document.querySelectorAll('.beat').forEach(beat => {
+                beat.dataset.noteIndex = "null";
+                beat.style.backgroundColor = '#eee';
+                beat.classList.remove('playing');
+            });
+            if (isPlaying) togglePlay(); 
+        }
+
+        function playSound(frequency) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.8);
+        }
+
+        async function togglePlay() {
+            if (isPlaying) {
+                isPlaying = false;
+                return; 
+            }
+            isPlaying = true;
+            const beats = document.querySelectorAll('.beat');
+            const playBtn = document.getElementById('playBtn');
+            playBtn.textContent = '⏹️ Stopp';
+            playBtn.style.backgroundColor = '#f44336';
+
+            for (let i = 0; i < beats.length; i++) {
+                if (!isPlaying) {
+                    beats.forEach(b => b.classList.remove('playing'));
+                    break; 
+                }
+                const beat = beats[i];
+                beat.classList.add('playing');
+                const noteId = beat.dataset.noteIndex;
+                if (noteId !== "null") {
+                    const note = notes.find(n => n.id === noteId);
+                    if (note) playSound(note.freq);
+                }
+                await new Promise(r => setTimeout(r, beatDuration));
+                beat.classList.remove('playing');
+            }
+            isPlaying = false;
+            playBtn.textContent = '▶️ Play';
+            playBtn.style.backgroundColor = '#4CAF50';
+        }
+
+        function exportToJPG() {
+            const captureArea = document.getElementById('capture-area');
+            const btn = document.getElementById('imageBtn');
+            const originalText = btn.textContent;
+            
+            btn.textContent = '⏳ Foto wird erstellt...';
+            
+            html2canvas(captureArea, {
+                scale: 2,
+                backgroundColor: "#f0f8ff"
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Meine_Farben_Melodie.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                
+                btn.textContent = originalText;
+            }).catch(err => {
+                alert("Beim Erstellen des Bildes ist ein Fehler aufgetreten.");
+                btn.textContent = originalText;
+            });
+        }
+
+        function saveCurrentMelody() {
+            const beats = document.querySelectorAll('.beat');
+            let currentPattern = [];
+            beats.forEach(beat => {
+                currentPattern.push(beat.dataset.noteIndex);
+            });
+
+            if (currentPattern.every(note => note === "null")) {
+                alert("Das Raster ist leer. Zeichne zuerst ein paar Noten!");
+                return;
+            }
+
+            let defaultName = `Melodie ${savedMelodies.length + 1}`;
+            let melodyName = prompt("Gib deiner Melodie einen Namen:", defaultName);
+            if (melodyName === null) return;
+            if (melodyName.trim() === "") melodyName = defaultName;
+
+            savedMelodies.push({ id: Date.now(), name: melodyName, pattern: currentPattern });
+            localStorage.setItem('meineMelodien', JSON.stringify(savedMelodies));
+            renderFolder();
+        }
+
+        function renderFolder() {
+            const listEl = document.getElementById('melodyList');
+            const emptyMsg = document.getElementById('emptyMessage');
+            listEl.innerHTML = '';
+
+            if (savedMelodies.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                savedMelodies.forEach((melody, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'melody-item';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'melody-name';
+                    nameSpan.textContent = `🎵 ${melody.name}`;
+
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'melody-actions';
+
+                    const loadBtn = document.createElement('button');
+                    loadBtn.className = 'load-btn';
+                    loadBtn.textContent = 'Laden';
+                    loadBtn.onclick = () => loadMelody(index);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete-btn';
+                    delBtn.textContent = 'Löschen';
+                    delBtn.onclick = () => deleteMelody(index);
+
+                    actionsDiv.appendChild(loadBtn);
+                    actionsDiv.appendChild(delBtn);
+
+                    li.appendChild(nameSpan);
+                    li.appendChild(actionsDiv);
+                    listEl.appendChild(li);
+                });
+            }
+        }
+
+        function loadMelody(index) {
+            if (isPlaying) togglePlay(); 
+            const melodyToLoad = savedMelodies[index];
+            const beats = document.querySelectorAll('.beat');
+            beats.forEach((beat, i) => {
+                const noteId = melodyToLoad.pattern[i];
+                beat.dataset.noteIndex = noteId;
+                if (noteId === "null") {
+                    beat.style.backgroundColor = '#eee';
+                } else {
+                    const note = notes.find(n => n.id === noteId);
+                    beat.style.backgroundColor = note.color;
+                }
+            });
+        }
+
+        function deleteMelody(index) {
+            if (confirm(`Bist du sicher, dass du "${savedMelodies[index].name}" löschen möchtest?`)) {
+                savedMelodies.splice(index, 1);
+                localStorage.setItem('meineMelodien', JSON.stringify(savedMelodies));
+                renderFolder();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
