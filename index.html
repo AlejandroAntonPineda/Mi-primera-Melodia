@@ -52,6 +52,31 @@
         }
         .note-btn:hover { transform: scale(1.1); }
         .note-btn.selected { border: 4px solid #333; transform: scale(1.15); }
+
+        /* Controles de 3 o 4 círculos */
+        .time-controls {
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .time-btn {
+            background-color: #ddd;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.2s;
+        }
+        .time-btn.active {
+            background-color: #ff9800;
+            color: white;
+            border-color: #e68a00;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         
         .grid-container {
             display: inline-block;
@@ -67,12 +92,14 @@
         }
         .measure {
             display: flex;
+            align-items: center; 
             gap: 10px;
             background-color: white;
             padding: 15px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
             border: 2px dashed #ccc;
+            position: relative;
         }
         .beat {
             width: 70px;
@@ -89,7 +116,39 @@
             transform: scale(1.05);
         }
 
-        .controls { margin: 20px 0 30px 0; }
+        .measure-controls {
+            display: none; 
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 10px;
+            padding-left: 10px;
+            border-left: 2px solid #eee;
+        }
+        .measure:last-child .measure-controls {
+            display: flex; 
+        }
+
+        .row-btn {
+            background-color: transparent;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+        .row-add { color: #4CAF50; border-color: #4CAF50; }
+        .row-add:hover { background-color: #4CAF50; color: white; }
+        .row-remove { color: #f44336; border-color: #f44336; }
+        .row-remove:hover { background-color: #f44336; color: white; }
+
+        .controls { margin: 20px 0 30px 0; max-width: 800px; margin-left: auto; margin-right: auto; }
         button.action-btn {
             font-size: 16px;
             padding: 12px 20px;
@@ -103,12 +162,14 @@
         }
         .play-btn { background-color: #4CAF50; }
         .play-btn:hover { background-color: #45a049; }
-        .clear-btn { background-color: #ff9800; }
-        .clear-btn:hover { background-color: #e68a00; }
+        .clear-btn { background-color: #f44336; }
+        .clear-btn:hover { background-color: #d32f2f; }
         .save-btn { background-color: #2196F3; }
         .save-btn:hover { background-color: #0b7dda; }
         .image-btn { background-color: #9c27b0; }
         .image-btn:hover { background-color: #7b1fa2; }
+        .colors-btn { background-color: #e91e63; }
+        .colors-btn:hover { background-color: #c2185b; }
 
         .folder-container {
             background-color: white;
@@ -154,14 +215,21 @@
         <h3>📖 Wie wird gespielt?</h3>
         <ol>
             <li><strong>Wähle eine Farbe</strong> aus der Palette. Jede Farbe klingt anders!</li>
-            <li><strong>Tippe auf die grauen Kreise</strong>, um deine Noten zu malen. Wenn du dich vertust, tippe einfach nochmal darauf, um sie zu löschen.</li>
+            <li>Wähle, ob deine Melodie <strong>3 oder 4 Kreise</strong> pro Reihe haben soll.</li>
+            <li><strong>Tippe auf die grauen Kreise</strong>, um deine Noten zu malen.</li>
             <li>Klicke auf den <strong>▶️ Play</strong> Button, um dein Musikstück anzuhören.</li>
-            <li>Gefällt es dir? Benutze die blauen und lila Buttons, um es <strong>in deinem Ordner zu speichern</strong> oder ein <strong>Foto herunterzuladen</strong>.</li>
+            <li>Benutze das <strong>➕ und ➖ am Ende</strong>, um dein Lied länger oder kürzer zu machen.</li>
         </ol>
     </div>
 
     <div class="palette" id="palette"></div>
     
+    <div class="time-controls">
+        <span>Kreise pro Reihe: </span>
+        <button class="time-btn" id="btn3Beats" onclick="setBeatsPerMeasure(3)">3</button>
+        <button class="time-btn active" id="btn4Beats" onclick="setBeatsPerMeasure(4)">4</button>
+    </div>
+
     <div class="grid-container" id="capture-area">
         <div class="grid" id="grid"></div>
     </div>
@@ -169,8 +237,10 @@
     <div class="controls">
         <button class="action-btn play-btn" id="playBtn">▶️ Play</button>
         <button class="action-btn clear-btn" id="clearBtn">🧹 Alles löschen</button>
+        <br><br>
         <button class="action-btn save-btn" id="saveBtn">💾 In Ordner speichern</button>
-        <button class="action-btn image-btn" id="imageBtn">📸 Foto herunterladen (JPG)</button>
+        <button class="action-btn image-btn" id="imageBtn">📸 Foto (Gitter) herunterladen</button>
+        <button class="action-btn colors-btn" id="downloadColorsBtn">🎨 Farbskala herunterladen</button>
     </div>
 
     <div class="folder-container">
@@ -180,23 +250,22 @@
     </div>
 
     <script>
-        // Noten im deutschen System mit dem hohen C (C')
         const notes = [
-            { id: 'C', name: 'C', color: '#ff3333', freq: 261.63 },   // Do
-            { id: 'D', name: 'D', color: '#ff8c00', freq: 293.66 },   // Re
-            { id: 'E', name: 'E', color: '#ffd700', freq: 329.63 },   // Mi
-            { id: 'F', name: 'F', color: '#a2ff33', freq: 349.23 },   // Fa
-            { id: 'G', name: 'G', color: '#00c853', freq: 392.00 },   // Sol
-            { id: 'A', name: 'A', color: '#1a1aff', freq: 440.00 },   // La
-            { id: 'H', name: 'H', color: '#ff33cc', freq: 493.88 },   // Si
-            { id: 'C2', name: "C'", color: '#ff3333', freq: 523.25 }  // Do agudo (Gleiches Rot)
+            { id: 'C', name: 'C', color: '#ff3333', freq: 261.63 },
+            { id: 'D', name: 'D', color: '#ff8c00', freq: 293.66 },
+            { id: 'E', name: 'E', color: '#ffd700', freq: 329.63 },
+            { id: 'F', name: 'F', color: '#a2ff33', freq: 349.23 },
+            { id: 'G', name: 'G', color: '#00c853', freq: 392.00 },
+            { id: 'A', name: 'A', color: '#1a1aff', freq: 440.00 },
+            { id: 'H', name: 'H', color: '#ff33cc', freq: 493.88 },
+            { id: 'C2', name: "C'", color: '#ff3333', freq: 523.25 }
         ];
 
         let selectedNote = notes[0];
         let audioCtx;
         let isPlaying = false;
-        const totalMeasures = 4;
-        const beatsPerMeasure = 4;
+        
+        let beatsPerMeasure = 4; // Cambiado a variable mutable
         const bpm = 60;
         const beatDuration = (60 / bpm) * 1000;
         
@@ -204,8 +273,6 @@
 
         function init() {
             const paletteEl = document.getElementById('palette');
-            const gridEl = document.getElementById('grid');
-
             const storedMelodies = localStorage.getItem('meineMelodien');
             if (storedMelodies) savedMelodies = JSON.parse(storedMelodies);
 
@@ -218,25 +285,96 @@
                 paletteEl.appendChild(btn);
             });
 
-            for (let i = 0; i < totalMeasures; i++) {
-                const measureEl = document.createElement('div');
-                measureEl.className = 'measure';
-                for (let j = 0; j < beatsPerMeasure; j++) {
-                    const beatEl = document.createElement('div');
-                    beatEl.className = 'beat';
-                    beatEl.dataset.noteIndex = "null";
-                    beatEl.onclick = () => toggleBeat(beatEl);
-                    measureEl.appendChild(beatEl);
-                }
-                gridEl.appendChild(measureEl);
+            const gridEl = document.getElementById('grid');
+            for (let i = 0; i < 4; i++) {
+                gridEl.appendChild(createMeasure());
             }
 
             document.getElementById('playBtn').onclick = togglePlay;
             document.getElementById('clearBtn').onclick = clearGrid;
             document.getElementById('saveBtn').onclick = saveCurrentMelody;
             document.getElementById('imageBtn').onclick = exportToJPG;
+            document.getElementById('downloadColorsBtn').onclick = downloadColorScale;
 
             renderFolder();
+        }
+
+        // --- NUEVA FUNCIÓN: Cambiar la cantidad de círculos por fila ---
+        function setBeatsPerMeasure(newBeats) {
+            if (beatsPerMeasure === newBeats) return;
+            const oldBeats = beatsPerMeasure;
+            beatsPerMeasure = newBeats;
+
+            // Actualizar botones visualmente
+            document.getElementById('btn3Beats').classList.toggle('active', newBeats === 3);
+            document.getElementById('btn4Beats').classList.toggle('active', newBeats === 4);
+
+            // Modificar las filas existentes
+            const measures = document.querySelectorAll('.measure');
+            measures.forEach(measure => {
+                const controls = measure.querySelector('.measure-controls');
+                
+                if (newBeats === 3 && oldBeats === 4) {
+                    // Remover el 4to círculo (índice 3)
+                    const beats = measure.querySelectorAll('.beat');
+                    if (beats.length === 4) {
+                        beats[3].remove();
+                    }
+                } else if (newBeats === 4 && oldBeats === 3) {
+                    // Añadir un nuevo círculo antes de los controles
+                    const beatEl = document.createElement('div');
+                    beatEl.className = 'beat';
+                    beatEl.dataset.noteIndex = "null";
+                    beatEl.onclick = () => toggleBeat(beatEl);
+                    measure.insertBefore(beatEl, controls);
+                }
+            });
+        }
+        // ----------------------------------------------------------------
+
+        function createMeasure() {
+            const measureEl = document.createElement('div');
+            measureEl.className = 'measure';
+            
+            // Usa la variable actual 'beatsPerMeasure' (3 o 4)
+            for (let j = 0; j < beatsPerMeasure; j++) {
+                const beatEl = document.createElement('div');
+                beatEl.className = 'beat';
+                beatEl.dataset.noteIndex = "null";
+                beatEl.onclick = () => toggleBeat(beatEl);
+                measureEl.appendChild(beatEl);
+            }
+
+            const controlsEl = document.createElement('div');
+            controlsEl.className = 'measure-controls';
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'row-btn row-add';
+            addBtn.textContent = '+';
+            addBtn.title = 'Reihe hinzufügen';
+            addBtn.onclick = () => {
+                const gridEl = document.getElementById('grid');
+                gridEl.appendChild(createMeasure()); 
+            };
+
+            const remBtn = document.createElement('button');
+            remBtn.className = 'row-btn row-remove';
+            remBtn.textContent = '−';
+            remBtn.title = 'Letzte Reihe entfernen';
+            remBtn.onclick = () => {
+                const measures = document.querySelectorAll('.measure');
+                if (measures.length > 1) {
+                    measures[measures.length - 1].remove(); 
+                } else {
+                    alert("Du brauchst mindestens eine Reihe!");
+                }
+            };
+
+            controlsEl.appendChild(addBtn);
+            controlsEl.appendChild(remBtn);
+            measureEl.appendChild(controlsEl);
+
+            return measureEl;
         }
 
         function selectNote(note, element) {
@@ -322,16 +460,78 @@
             
             html2canvas(captureArea, {
                 scale: 2,
-                backgroundColor: "#f0f8ff"
+                backgroundColor: "#f0f8ff",
+                ignoreElements: (element) => element.classList.contains('measure-controls')
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'Meine_Farben_Melodie.jpg';
+                link.download = 'Mein_Gitter.jpg';
                 link.href = canvas.toDataURL('image/jpeg', 0.9);
                 link.click();
                 
                 btn.textContent = originalText;
             }).catch(err => {
                 alert("Beim Erstellen des Bildes ist ein Fehler aufgetreten.");
+                btn.textContent = originalText;
+            });
+        }
+
+        function downloadColorScale() {
+            const btn = document.getElementById('downloadColorsBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Wird erstellt...';
+
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.backgroundColor = '#fffacd';
+            container.style.padding = '25px';
+            container.style.borderRadius = '15px';
+            container.style.display = 'flex';
+            container.style.flexWrap = 'wrap';
+            container.style.justifyContent = 'center';
+            container.style.gap = '15px';
+            container.style.width = '340px'; 
+            container.style.border = '3px solid #ffe066';
+            container.style.fontFamily = "'Comic Sans MS', sans-serif";
+
+            const title = document.createElement('h2');
+            title.textContent = '🎨 Meine Farbskala 🎵';
+            title.style.width = '100%';
+            title.style.textAlign = 'center';
+            title.style.color = '#d4a017';
+            title.style.margin = '0 0 15px 0';
+            container.appendChild(title);
+
+            notes.forEach(note => {
+                const circle = document.createElement('div');
+                circle.style.width = '60px';
+                circle.style.height = '60px';
+                circle.style.borderRadius = '50%';
+                circle.style.backgroundColor = note.color;
+                circle.style.display = 'flex';
+                circle.style.alignItems = 'center';
+                circle.style.justifyContent = 'center';
+                circle.style.fontWeight = 'bold';
+                circle.style.fontSize = '20px';
+                circle.style.color = 'rgba(0,0,0,0.5)';
+                circle.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                circle.textContent = note.name;
+                
+                container.appendChild(circle);
+            });
+
+            document.body.appendChild(container);
+
+            html2canvas(container, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Farbskala.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                document.body.removeChild(container);
+                btn.textContent = originalText;
+            }).catch(err => {
+                alert("Fehler beim Erstellen der Farben.");
+                if(document.body.contains(container)) document.body.removeChild(container);
                 btn.textContent = originalText;
             });
         }
@@ -353,7 +553,13 @@
             if (melodyName === null) return;
             if (melodyName.trim() === "") melodyName = defaultName;
 
-            savedMelodies.push({ id: Date.now(), name: melodyName, pattern: currentPattern });
+            // ACTUALIZADO: Guardamos la propiedad 'beats' también
+            savedMelodies.push({ 
+                id: Date.now(), 
+                name: melodyName, 
+                pattern: currentPattern,
+                beats: beatsPerMeasure // 3 o 4
+            });
             localStorage.setItem('meineMelodien', JSON.stringify(savedMelodies));
             renderFolder();
         }
@@ -373,7 +579,9 @@
                     
                     const nameSpan = document.createElement('span');
                     nameSpan.className = 'melody-name';
-                    nameSpan.textContent = `🎵 ${melody.name}`;
+                    // Mostrar un pequeño indicador si es de 3 o 4 tiempos
+                    const rhythmIndicator = melody.beats === 3 ? '(3/4)' : '(4/4)';
+                    nameSpan.textContent = `🎵 ${melody.name} ${rhythmIndicator}`;
 
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'melody-actions';
@@ -401,15 +609,29 @@
         function loadMelody(index) {
             if (isPlaying) togglePlay(); 
             const melodyToLoad = savedMelodies[index];
+            
+            // ACTUALIZADO: Forzar el cambio de la UI al ritmo correcto antes de cargar
+            const targetBeats = melodyToLoad.beats || 4; // Por si hay canciones viejas guardadas
+            setBeatsPerMeasure(targetBeats);
+
+            const requiredMeasures = Math.ceil(melodyToLoad.pattern.length / targetBeats);
+
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = ''; 
+            
+            for (let i = 0; i < requiredMeasures; i++) {
+                gridEl.appendChild(createMeasure());
+            }
+
             const beats = document.querySelectorAll('.beat');
             beats.forEach((beat, i) => {
-                const noteId = melodyToLoad.pattern[i];
-                beat.dataset.noteIndex = noteId;
-                if (noteId === "null") {
-                    beat.style.backgroundColor = '#eee';
-                } else {
-                    const note = notes.find(n => n.id === noteId);
-                    beat.style.backgroundColor = note.color;
+                if (i < melodyToLoad.pattern.length) {
+                    const noteId = melodyToLoad.pattern[i];
+                    beat.dataset.noteIndex = noteId;
+                    if (noteId !== "null") {
+                        const note = notes.find(n => n.id === noteId);
+                        beat.style.backgroundColor = note.color;
+                    }
                 }
             });
         }
