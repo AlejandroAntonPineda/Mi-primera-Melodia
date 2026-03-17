@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Musikspiel für Kinder - Komplett</title>
+    <title>Musikspiel für Kinder - Piano & Glocke</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
@@ -53,11 +53,26 @@
         .note-btn:hover { transform: scale(1.1); }
         .note-btn.selected { border: 4px solid #333; transform: scale(1.15); }
 
-        /* Controles de 3 o 4 círculos */
         .time-controls {
             margin-bottom: 15px;
             font-size: 18px;
             font-weight: bold;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
         }
         .time-btn {
             background-color: #ddd;
@@ -66,7 +81,6 @@
             padding: 5px 15px;
             font-size: 16px;
             cursor: pointer;
-            margin: 0 5px;
             font-weight: bold;
             color: #555;
             transition: all 0.2s;
@@ -108,10 +122,16 @@
             background-color: #eee;
             border: 2px solid #ddd;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, width 0.2s, border-radius 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #888;
+            font-size: 24px;
         }
         .beat.playing {
-            border-color: #333;
+            border-color: #333 !important;
             box-shadow: 0 0 15px rgba(0,0,0,0.3);
             transform: scale(1.05);
         }
@@ -214,20 +234,34 @@
     <div class="instructions">
         <h3>📖 Wie wird gespielt?</h3>
         <ol>
-            <li><strong>Wähle eine Farbe</strong> aus der Palette. Jede Farbe klingt anders!</li>
-            <li>Wähle, ob deine Melodie <strong>3 oder 4 Kreise</strong> pro Reihe haben soll.</li>
+            <li><strong>Wähle eine Farbe</strong> und ein <strong>Instrument</strong> aus.</li>
+            <li><strong>Wähle die Notenlänge:</strong> Negra (1 Kreis), Blanca (2 Kreise) oder Redonda (4 Kreise).</li>
             <li><strong>Tippe auf die grauen Kreise</strong>, um deine Noten zu malen.</li>
             <li>Klicke auf den <strong>▶️ Play</strong> Button, um dein Musikstück anzuhören.</li>
-            <li>Benutze das <strong>➕ und ➖ am Ende</strong>, um dein Lied länger oder kürzer zu machen.</li>
         </ol>
     </div>
 
     <div class="palette" id="palette"></div>
     
     <div class="time-controls">
-        <span>Kreise pro Reihe: </span>
-        <button class="time-btn" id="btn3Beats" onclick="setBeatsPerMeasure(3)">3</button>
-        <button class="time-btn active" id="btn4Beats" onclick="setBeatsPerMeasure(4)">4</button>
+        <div class="control-group">
+            <span>Rhythmus: </span>
+            <button class="time-btn" id="btn3Beats" onclick="setBeatsPerMeasure(3)">3/4</button>
+            <button class="time-btn active" id="btn4Beats" onclick="setBeatsPerMeasure(4)">4/4</button>
+        </div>
+        
+        <div class="control-group">
+            <span>Notenlänge: </span>
+            <button class="time-btn active" id="btnDur1" onclick="setDuration(1)">♩ Viertel Note (1)</button>
+            <button class="time-btn" id="btnDur2" onclick="setDuration(2)">d Halbe Note (2)</button>
+            <button class="time-btn" id="btnDur4" onclick="setDuration(4)">o Ganze Note (4)</button>
+        </div>
+
+        <div class="control-group">
+            <span>Klang: </span>
+            <button class="time-btn active" id="btnInstPiano" onclick="setInstrument('piano')">Piano 🎹</button>
+            <button class="time-btn" id="btnInstBell" onclick="setInstrument('bell')">Glocke 🔔</button>
+        </div>
     </div>
 
     <div class="grid-container" id="capture-area">
@@ -239,8 +273,8 @@
         <button class="action-btn clear-btn" id="clearBtn">🧹 Alles löschen</button>
         <br><br>
         <button class="action-btn save-btn" id="saveBtn">💾 In Ordner speichern</button>
-        <button class="action-btn image-btn" id="imageBtn">📸 Foto (Gitter) herunterladen</button>
-        <button class="action-btn colors-btn" id="downloadColorsBtn">🎨 Farbskala herunterladen</button>
+        <button class="action-btn image-btn" id="imageBtn">📸 Foto (2 Spalten)</button>
+        <button class="action-btn colors-btn" id="downloadColorsBtn">🎨 Farbskala</button>
     </div>
 
     <div class="folder-container">
@@ -262,11 +296,13 @@
         ];
 
         let selectedNote = notes[0];
+        let selectedDuration = 1; 
+        let currentInstrument = 'piano';
         let audioCtx;
         let isPlaying = false;
         
-        let beatsPerMeasure = 4; // Cambiado a variable mutable
-        const bpm = 60;
+        let beatsPerMeasure = 4; 
+        const bpm = 75;
         const beatDuration = (60 / bpm) * 1000;
         
         let savedMelodies = [];
@@ -299,50 +335,65 @@
             renderFolder();
         }
 
-        // --- NUEVA FUNCIÓN: Cambiar la cantidad de círculos por fila ---
+        function setInstrument(type) {
+            currentInstrument = type;
+            document.getElementById('btnInstPiano').classList.toggle('active', type === 'piano');
+            document.getElementById('btnInstBell').classList.toggle('active', type === 'bell');
+        }
+
+        function setDuration(dur) {
+            selectedDuration = dur;
+            document.getElementById('btnDur1').classList.toggle('active', dur === 1);
+            document.getElementById('btnDur2').classList.toggle('active', dur === 2);
+            document.getElementById('btnDur4').classList.toggle('active', dur === 4);
+        }
+
         function setBeatsPerMeasure(newBeats) {
             if (beatsPerMeasure === newBeats) return;
             const oldBeats = beatsPerMeasure;
             beatsPerMeasure = newBeats;
 
-            // Actualizar botones visualmente
             document.getElementById('btn3Beats').classList.toggle('active', newBeats === 3);
             document.getElementById('btn4Beats').classList.toggle('active', newBeats === 4);
 
-            // Modificar las filas existentes
             const measures = document.querySelectorAll('.measure');
             measures.forEach(measure => {
                 const controls = measure.querySelector('.measure-controls');
+                const beats = measure.querySelectorAll('.beat');
                 
                 if (newBeats === 3 && oldBeats === 4) {
-                    // Remover el 4to círculo (índice 3)
-                    const beats = measure.querySelectorAll('.beat');
                     if (beats.length === 4) {
+                        if (parseInt(beats[0].dataset.duration) === 4) {
+                            beats.forEach(b => resetBeatVisuals(b));
+                        }
+                        else if (parseInt(beats[2].dataset.duration) === 2) {
+                            resetBeatVisuals(beats[2]);
+                            resetBeatVisuals(beats[3]);
+                        }
                         beats[3].remove();
                     }
                 } else if (newBeats === 4 && oldBeats === 3) {
-                    // Añadir un nuevo círculo antes de los controles
-                    const beatEl = document.createElement('div');
-                    beatEl.className = 'beat';
-                    beatEl.dataset.noteIndex = "null";
-                    beatEl.onclick = () => toggleBeat(beatEl);
+                    const beatEl = createBeatElement();
                     measure.insertBefore(beatEl, controls);
                 }
             });
         }
-        // ----------------------------------------------------------------
+
+        function createBeatElement() {
+            const beatEl = document.createElement('div');
+            beatEl.className = 'beat';
+            beatEl.dataset.noteIndex = "null";
+            beatEl.dataset.duration = "1";
+            beatEl.onclick = () => toggleBeat(beatEl);
+            return beatEl;
+        }
 
         function createMeasure() {
             const measureEl = document.createElement('div');
             measureEl.className = 'measure';
             
-            // Usa la variable actual 'beatsPerMeasure' (3 o 4)
             for (let j = 0; j < beatsPerMeasure; j++) {
-                const beatEl = document.createElement('div');
-                beatEl.className = 'beat';
-                beatEl.dataset.noteIndex = "null";
-                beatEl.onclick = () => toggleBeat(beatEl);
-                measureEl.appendChild(beatEl);
+                measureEl.appendChild(createBeatElement());
             }
 
             const controlsEl = document.createElement('div');
@@ -351,23 +402,15 @@
             const addBtn = document.createElement('button');
             addBtn.className = 'row-btn row-add';
             addBtn.textContent = '+';
-            addBtn.title = 'Reihe hinzufügen';
-            addBtn.onclick = () => {
-                const gridEl = document.getElementById('grid');
-                gridEl.appendChild(createMeasure()); 
-            };
+            addBtn.onclick = () => { document.getElementById('grid').appendChild(createMeasure()); };
 
             const remBtn = document.createElement('button');
             remBtn.className = 'row-btn row-remove';
             remBtn.textContent = '−';
-            remBtn.title = 'Letzte Reihe entfernen';
             remBtn.onclick = () => {
                 const measures = document.querySelectorAll('.measure');
-                if (measures.length > 1) {
-                    measures[measures.length - 1].remove(); 
-                } else {
-                    alert("Du brauchst mindestens eine Reihe!");
-                }
+                if (measures.length > 1) measures[measures.length - 1].remove(); 
+                else alert("Du brauchst mindestens eine Reihe!");
             };
 
             controlsEl.appendChild(addBtn);
@@ -381,43 +424,120 @@
             selectedNote = note;
             document.querySelectorAll('.note-btn').forEach(b => b.classList.remove('selected'));
             element.classList.add('selected');
-            playSound(note.freq);
+            playSound(note.freq, 1);
+        }
+
+        function resetBeatVisuals(beat) {
+            beat.dataset.noteIndex = "null";
+            beat.dataset.duration = "1";
+            beat.style.backgroundColor = '#eee';
+            beat.style.border = "2px solid #ddd";
+            beat.style.width = "70px"; 
+            beat.style.borderRadius = "50%";
+            beat.style.display = "flex"; 
+            beat.textContent = "";
         }
 
         function toggleBeat(beatEl) {
-            if (beatEl.dataset.noteIndex === selectedNote.id) {
-                beatEl.dataset.noteIndex = "null";
-                beatEl.style.backgroundColor = '#eee';
-            } else {
-                beatEl.dataset.noteIndex = selectedNote.id;
-                beatEl.style.backgroundColor = selectedNote.color;
-                playSound(selectedNote.freq);
+            const measure = beatEl.parentElement;
+            const beats = Array.from(measure.querySelectorAll('.beat'));
+            const index = beats.indexOf(beatEl);
+
+            const currentDur = parseInt(beatEl.dataset.duration) || 1;
+            if (beatEl.dataset.noteIndex === selectedNote.id && currentDur === selectedDuration) {
+                for(let i=0; i<currentDur; i++) {
+                    if(index + i < beats.length) resetBeatVisuals(beats[index + i]);
+                }
+                return;
             }
+
+            if (index + selectedDuration - 1 >= beats.length) {
+                if (selectedDuration === 4) {
+                    alert("Für eine (Ganze Note) brauchst du 4 freie Kreise in einer Reihe!");
+                } else {
+                    alert("Für eine (Halbe Note) brauchst du 2 freie Kreise!");
+                }
+                return;
+            }
+
+            for(let i=0; i<beats.length; i++) {
+                let d = parseInt(beats[i].dataset.duration) || 1;
+                let noteStart = i;
+                let noteEnd = i + d - 1;
+                let targetStart = index;
+                let targetEnd = index + selectedDuration - 1;
+                
+                if (noteStart <= targetEnd && noteEnd >= targetStart) {
+                    for(let j=0; j<d; j++) {
+                        if(i+j < beats.length) resetBeatVisuals(beats[i+j]);
+                    }
+                }
+            }
+
+            beatEl.dataset.noteIndex = selectedNote.id;
+            beatEl.dataset.duration = selectedDuration.toString();
+            beatEl.style.backgroundColor = selectedNote.color;
+
+            if (selectedDuration === 1) {
+                beatEl.style.border = "2px solid #ddd";
+            } 
+            else if (selectedDuration === 2) {
+                beatEl.style.border = "2px solid #555"; 
+                beatEl.style.width = "150px"; 
+                beatEl.style.borderRadius = "35px";
+                
+                beats[index+1].dataset.noteIndex = "tie";
+                beats[index+1].style.display = "none";
+            }
+            else if (selectedDuration === 4) {
+                beatEl.style.border = "2px solid #555"; 
+                beatEl.style.width = "310px"; 
+                beatEl.style.borderRadius = "35px";
+                
+                beats[index+1].dataset.noteIndex = "tie";
+                beats[index+1].style.display = "none";
+                beats[index+2].dataset.noteIndex = "tie";
+                beats[index+2].style.display = "none";
+                beats[index+3].dataset.noteIndex = "tie";
+                beats[index+3].style.display = "none";
+            }
+
+            playSound(selectedNote.freq, selectedDuration);
         }
 
         function clearGrid() {
-            document.querySelectorAll('.beat').forEach(beat => {
-                beat.dataset.noteIndex = "null";
-                beat.style.backgroundColor = '#eee';
-                beat.classList.remove('playing');
-            });
+            document.querySelectorAll('.beat').forEach(resetBeatVisuals);
             if (isPlaying) togglePlay(); 
         }
 
-        function playSound(frequency) {
+        function playSound(frequency, durationBeats = 1) {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.8);
+            
+            const now = audioCtx.currentTime;
+            const dur = (durationBeats * beatDuration) / 1000;
+
+            const createOsc = (f, vol, type, attack, decay) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(f, now);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(vol, now + attack);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + dur);
+            };
+
+            if (currentInstrument === 'piano') {
+                createOsc(frequency, 0.5, 'triangle', 0.01, 0.3);
+                createOsc(frequency * 2, 0.1, 'sine', 0.01, 0.2);
+            } else {
+                createOsc(frequency, 0.4, 'sine', 0.02, 0.8);
+                createOsc(frequency * 4, 0.15, 'sine', 0.01, 0.4);
+            }
         }
 
         async function togglePlay() {
@@ -437,13 +557,19 @@
                     break; 
                 }
                 const beat = beats[i];
+                
+                if (beat.style.display === "none") continue;
+
                 beat.classList.add('playing');
                 const noteId = beat.dataset.noteIndex;
-                if (noteId !== "null") {
+                const dur = parseInt(beat.dataset.duration) || 1;
+
+                if (noteId !== "null" && noteId !== "tie") {
                     const note = notes.find(n => n.id === noteId);
-                    if (note) playSound(note.freq);
+                    if (note) playSound(note.freq, dur);
                 }
-                await new Promise(r => setTimeout(r, beatDuration));
+                
+                await new Promise(r => setTimeout(r, beatDuration * dur));
                 beat.classList.remove('playing');
             }
             isPlaying = false;
@@ -458,24 +584,43 @@
             
             btn.textContent = '⏳ Foto wird erstellt...';
             
-            html2canvas(captureArea, {
+            const cloneContainer = captureArea.cloneNode(true);
+            
+            cloneContainer.style.position = 'absolute';
+            cloneContainer.style.left = '-9999px';
+            cloneContainer.style.top = '-9999px';
+            cloneContainer.style.width = 'max-content'; 
+            
+            const clonedGrid = cloneContainer.querySelector('.grid');
+            clonedGrid.style.display = 'grid';
+            clonedGrid.style.gridTemplateColumns = 'auto auto'; 
+            clonedGrid.style.gap = '20px'; 
+            clonedGrid.style.justifyContent = 'center';
+            
+            const controls = cloneContainer.querySelectorAll('.measure-controls');
+            controls.forEach(ctrl => ctrl.style.display = 'none');
+
+            document.body.appendChild(cloneContainer);
+            
+            html2canvas(cloneContainer, {
                 scale: 2,
-                backgroundColor: "#f0f8ff",
-                ignoreElements: (element) => element.classList.contains('measure-controls')
+                backgroundColor: "#f0f8ff"
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'Mein_Gitter.jpg';
                 link.href = canvas.toDataURL('image/jpeg', 0.9);
                 link.click();
                 
+                document.body.removeChild(cloneContainer);
                 btn.textContent = originalText;
             }).catch(err => {
                 alert("Beim Erstellen des Bildes ist ein Fehler aufgetreten.");
+                if (document.body.contains(cloneContainer)) document.body.removeChild(cloneContainer);
                 btn.textContent = originalText;
             });
         }
 
-        function downloadColorScale() {
+        function downloadColorScale() { 
             const btn = document.getElementById('downloadColorsBtn');
             const originalText = btn.textContent;
             btn.textContent = '⏳ Wird erstellt...';
@@ -540,10 +685,13 @@
             const beats = document.querySelectorAll('.beat');
             let currentPattern = [];
             beats.forEach(beat => {
-                currentPattern.push(beat.dataset.noteIndex);
+                currentPattern.push({
+                    id: beat.dataset.noteIndex,
+                    dur: beat.dataset.duration || 1
+                });
             });
 
-            if (currentPattern.every(note => note === "null")) {
+            if (currentPattern.every(note => note.id === "null")) {
                 alert("Das Raster ist leer. Zeichne zuerst ein paar Noten!");
                 return;
             }
@@ -553,12 +701,11 @@
             if (melodyName === null) return;
             if (melodyName.trim() === "") melodyName = defaultName;
 
-            // ACTUALIZADO: Guardamos la propiedad 'beats' también
             savedMelodies.push({ 
                 id: Date.now(), 
                 name: melodyName, 
                 pattern: currentPattern,
-                beats: beatsPerMeasure // 3 o 4
+                beats: beatsPerMeasure
             });
             localStorage.setItem('meineMelodien', JSON.stringify(savedMelodies));
             renderFolder();
@@ -579,7 +726,6 @@
                     
                     const nameSpan = document.createElement('span');
                     nameSpan.className = 'melody-name';
-                    // Mostrar un pequeño indicador si es de 3 o 4 tiempos
                     const rhythmIndicator = melody.beats === 3 ? '(3/4)' : '(4/4)';
                     nameSpan.textContent = `🎵 ${melody.name} ${rhythmIndicator}`;
 
@@ -610,8 +756,7 @@
             if (isPlaying) togglePlay(); 
             const melodyToLoad = savedMelodies[index];
             
-            // ACTUALIZADO: Forzar el cambio de la UI al ritmo correcto antes de cargar
-            const targetBeats = melodyToLoad.beats || 4; // Por si hay canciones viejas guardadas
+            const targetBeats = melodyToLoad.beats || 4;
             setBeatsPerMeasure(targetBeats);
 
             const requiredMeasures = Math.ceil(melodyToLoad.pattern.length / targetBeats);
@@ -626,11 +771,32 @@
             const beats = document.querySelectorAll('.beat');
             beats.forEach((beat, i) => {
                 if (i < melodyToLoad.pattern.length) {
-                    const noteId = melodyToLoad.pattern[i];
+                    const noteData = melodyToLoad.pattern[i];
+                    
+                    const noteId = typeof noteData === 'string' ? noteData : noteData.id;
+                    const dur = typeof noteData === 'string' ? 1 : parseInt(noteData.dur);
+
                     beat.dataset.noteIndex = noteId;
-                    if (noteId !== "null") {
+                    beat.dataset.duration = dur;
+
+                    if (noteId === "tie") {
+                        beat.style.display = "none";
+                    } else if (noteId !== "null") {
                         const note = notes.find(n => n.id === noteId);
                         beat.style.backgroundColor = note.color;
+                        if (dur === 4) {
+                            beat.style.width = "310px";
+                            beat.style.borderRadius = "35px";
+                            beat.style.border = "2px solid #555";
+                        } else if (dur === 2) {
+                            beat.style.width = "150px";
+                            beat.style.borderRadius = "35px";
+                            beat.style.border = "2px solid #555";
+                        } else {
+                            beat.style.border = "2px solid #ddd";
+                        }
+                    } else {
+                        resetBeatVisuals(beat);
                     }
                 }
             });
