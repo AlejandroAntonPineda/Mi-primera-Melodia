@@ -477,6 +477,8 @@
             beatEl.dataset.noteIndex = selectedNote.id;
             beatEl.dataset.duration = selectedDuration.toString();
             beatEl.style.backgroundColor = selectedNote.color;
+            beatEl.textContent = selectedNote.id === 'C2' ? '⬆' : '';
+            beatEl.style.color = "rgba(0,0,0,0.5)";
 
             if (selectedDuration === 1) {
                 beatEl.style.border = "2px solid #ddd";
@@ -784,6 +786,9 @@
                     } else if (noteId !== "null") {
                         const note = notes.find(n => n.id === noteId);
                         beat.style.backgroundColor = note.color;
+                        beat.textContent = noteId === 'C2' ? '⬆' : '';
+                        beat.style.color = "rgba(0,0,0,0.5)";
+
                         if (dur === 4) {
                             beat.style.width = "310px";
                             beat.style.borderRadius = "35px";
