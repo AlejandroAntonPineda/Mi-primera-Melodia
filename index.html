@@ -10,10 +10,11 @@
             font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             background-color: #f0f8ff;
             text-align: center;
-            padding: 20px;
+            padding: 20px 20px 60px 20px; /* Un poco más de padding abajo */
             color: #333;
+            margin: 0;
         }
-        h1 { color: #333; margin-bottom: 5px; }
+        h1 { color: #333; margin-top: 10px; margin-bottom: 5px; }
         
         .instructions {
             background-color: #fffacd;
@@ -28,11 +29,23 @@
         .instructions h3 { margin-top: 0; text-align: center; color: #d4a017; }
         .instructions ol { margin-bottom: 0; padding-left: 20px; font-size: 16px; line-height: 1.5; }
 
+        /* --- NUEVO CONTENEDOR STICKY --- */
+        .sticky-container {
+            position: sticky;
+            top: 0;
+            background-color: #f0f8ff; /* Mismo color que el body para ocultar lo que pasa por debajo */
+            z-index: 1000;
+            padding: 15px 0 10px 0;
+            border-bottom: 2px dashed #ccc;
+            box-shadow: 0 10px 15px -10px rgba(0,0,0,0.1); /* Sombra suave hacia abajo */
+            margin-bottom: 20px;
+        }
+
         .palette {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
         }
         .note-btn {
@@ -54,7 +67,6 @@
         .note-btn.selected { border: 4px solid #333; transform: scale(1.15); }
 
         .time-controls {
-            margin-bottom: 15px;
             font-size: 18px;
             font-weight: bold;
             display: flex;
@@ -241,29 +253,30 @@
         </ol>
     </div>
 
-    <div class="palette" id="palette"></div>
-    
-    <div class="time-controls">
-        <div class="control-group">
-            <span>Rhythmus: </span>
-            <button class="time-btn" id="btn3Beats" onclick="setBeatsPerMeasure(3)">3/4</button>
-            <button class="time-btn active" id="btn4Beats" onclick="setBeatsPerMeasure(4)">4/4</button>
-        </div>
+    <div class="sticky-container">
+        <div class="palette" id="palette"></div>
         
-        <div class="control-group">
-            <span>Notenlänge: </span>
-            <button class="time-btn active" id="btnDur1" onclick="setDuration(1)">♩ Viertel Note (1)</button>
-            <button class="time-btn" id="btnDur2" onclick="setDuration(2)">d Halbe Note (2)</button>
-            <button class="time-btn" id="btnDur4" onclick="setDuration(4)">o Ganze Note (4)</button>
-        </div>
+        <div class="time-controls">
+            <div class="control-group">
+                <span>Rhythmus: </span>
+                <button class="time-btn" id="btn3Beats" onclick="setBeatsPerMeasure(3)">3/4</button>
+                <button class="time-btn active" id="btn4Beats" onclick="setBeatsPerMeasure(4)">4/4</button>
+            </div>
+            
+            <div class="control-group">
+                <span>Notenlänge: </span>
+                <button class="time-btn active" id="btnDur1" onclick="setDuration(1)">♩ Viertel Note (1)</button>
+                <button class="time-btn" id="btnDur2" onclick="setDuration(2)">d Halbe Note (2)</button>
+                <button class="time-btn" id="btnDur4" onclick="setDuration(4)">o Ganze Note (4)</button>
+            </div>
 
-        <div class="control-group">
-            <span>Klang: </span>
-            <button class="time-btn active" id="btnInstPiano" onclick="setInstrument('piano')">Piano 🎹</button>
-            <button class="time-btn" id="btnInstBell" onclick="setInstrument('bell')">Glocke 🔔</button>
+            <div class="control-group">
+                <span>Klang: </span>
+                <button class="time-btn active" id="btnInstPiano" onclick="setInstrument('piano')">Piano 🎹</button>
+                <button class="time-btn" id="btnInstBell" onclick="setInstrument('bell')">Glocke 🔔</button>
+            </div>
         </div>
     </div>
-
     <div class="grid-container" id="capture-area">
         <div class="grid" id="grid"></div>
     </div>
