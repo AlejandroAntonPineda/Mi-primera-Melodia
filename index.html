@@ -10,7 +10,7 @@
             font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             background-color: #f0f8ff;
             text-align: center;
-            padding: 20px 20px 60px 20px; /* Un poco más de padding abajo */
+            padding: 20px 20px 60px 20px;
             color: #333;
             margin: 0;
         }
@@ -29,15 +29,14 @@
         .instructions h3 { margin-top: 0; text-align: center; color: #d4a017; }
         .instructions ol { margin-bottom: 0; padding-left: 20px; font-size: 16px; line-height: 1.5; }
 
-        /* --- NUEVO CONTENEDOR STICKY --- */
         .sticky-container {
             position: sticky;
             top: 0;
-            background-color: #f0f8ff; /* Mismo color que el body para ocultar lo que pasa por debajo */
+            background-color: #f0f8ff;
             z-index: 1000;
             padding: 15px 0 10px 0;
             border-bottom: 2px dashed #ccc;
-            box-shadow: 0 10px 15px -10px rgba(0,0,0,0.1); /* Sombra suave hacia abajo */
+            box-shadow: 0 10px 15px -10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
 
@@ -675,7 +674,9 @@
                 circle.style.fontSize = '20px';
                 circle.style.color = 'rgba(0,0,0,0.5)';
                 circle.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                circle.textContent = note.name;
+                
+                // Muestra la letra normalmente, pero le añade la flecha explícita al C2
+                circle.textContent = note.id === 'C2' ? 'C ⬆' : note.name;
                 
                 container.appendChild(circle);
             });
